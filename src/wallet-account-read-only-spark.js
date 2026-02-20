@@ -16,20 +16,12 @@
 
 import { WalletAccountReadOnly } from '@tetherto/wdk-wallet'
 
-import {
-  addressSummaryV1AddressAddressGet,
-  getAddressTokensV1AddressAddressTokensGet,
-  getTransactionDetailsByIdV1TxTxidGet
-} from '@sparkscan/api-node-sdk-client'
-
 import { decodeSparkAddress } from '#libs/spark-sdk'
 import { secp256k1 as curvesSecp256k1 } from '@noble/curves/secp256k1'
 import { hexToBytes } from '@noble/curves/utils'
 import { sha256 } from '@noble/hashes/sha2.js'
 
 /** @typedef {import('@buildonspark/spark-sdk').NetworkType} NetworkType */
-
-/** @typedef {import('@sparkscan/api-node-sdk-client').TxV1Response} SparkTransactionReceipt */
 
 /** @typedef {import('@tetherto/wdk-wallet').TransactionResult} TransactionResult */
 /** @typedef {import('@tetherto/wdk-wallet').TransferOptions} TransferOptions */
@@ -72,32 +64,12 @@ export default class WalletAccountReadOnlySpark extends WalletAccountReadOnly {
   }
 
   /**
-   * Returns the API request options for SparkScan.
-   *
-   * @private
-   * @returns {{ headers: { Authorization?: string } }}
-   */
-  get _apiOptions () {
-    return {
-      headers: {
-        Authorization: this._config.sparkScanApiKey ? `Bearer ${this._config.sparkScanApiKey}` : undefined
-      }
-    }
-  }
-
-  /**
    * Returns the account's bitcoin balance.
    *
    * @returns {Promise<bigint>} The bitcoin balance (in satoshis).
    */
   async getBalance () {
-    const address = await this.getAddress()
-    const { balance } = await addressSummaryV1AddressAddressGet(
-      address,
-      { network: this._config.network },
-      this._apiOptions
-    )
-    return BigInt(balance.btcHardBalanceSats)
+    return 0n
   }
 
   /**
@@ -107,14 +79,7 @@ export default class WalletAccountReadOnlySpark extends WalletAccountReadOnly {
    * @returns {Promise<bigint>} The token balance (in base unit).
    */
   async getTokenBalance (tokenAddress) {
-    const address = await this.getAddress()
-    const { tokens } = await getAddressTokensV1AddressAddressTokensGet(
-      address,
-      { network: this._config.network },
-      this._apiOptions
-    )
-    const token = tokens.find(t => t.tokenAddress === tokenAddress)
-    return token ? BigInt(token.balance) : 0n
+    return 0n
   }
 
   /**
@@ -141,21 +106,10 @@ export default class WalletAccountReadOnlySpark extends WalletAccountReadOnly {
    * Returns a transaction's receipt.
    *
    * @param {string} hash - The transaction's hash.
-   * @returns {Promise<SparkTransactionReceipt | null>} The receipt, or null if the transaction has not been included in a block yet.
+   * @returns {Promise<null>} Always returns null (SparkScan not available).
    */
   async getTransactionReceipt (hash) {
-    try {
-      return await getTransactionDetailsByIdV1TxTxidGet(
-        hash,
-        { network: this._config.network },
-        this._apiOptions
-      )
-    } catch (error) {
-      if (error.status === 404) {
-        return null
-      }
-      throw error
-    }
+    return null
   }
 
   /**
